@@ -63,8 +63,8 @@ const DomoList = (props) => {
         );
     }
 
-    const domoNodes = domos.map(domo => {
-        return (
+    const domoNodes = domos.flatMap((domo, i) => {
+        const node = (
             <div key={domo.id} className="domo">
                 <img src="/assets/img/domoface.jpeg" alt="domo face" className="domoFace" />
                 <h3 className="domoName">Name: {domo.name}</h3>
@@ -72,6 +72,18 @@ const DomoList = (props) => {
                 <h3 className="domoFood">Favorite Food: {domo.food}</h3>
             </div>
         );
+
+        // Displays an 'ad' after every 5 posts
+        if ((i + 1) % 5 === 0) {
+            return [
+                node,
+                <div key={`placeholder-${i}`} className="domo">
+                    <h3 className="domoName">placeholder</h3>
+                </div>
+            ];
+        }
+
+        return node;
     });
 
     return (
