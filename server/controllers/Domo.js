@@ -2,7 +2,7 @@ const models = require('../models');
 
 const { Domo } = models;
 
-const makerPage = async (req, res) => res.render('app');
+const homePage = async (req, res) => res.render('app');
 
 const makeDomo = async (req, res) => {
   if (!req.body.name || !req.body.age || !req.body.food) {
@@ -31,9 +31,10 @@ const makeDomo = async (req, res) => {
 
 const getDomos = async (req, res) => {
   try {
-    const query = {  };
-    // owner: req.session.account._id
-    const docs = await Domo.find(query).select('name age food').lean().exec();
+    const query = { };
+    // const query = {owner: req.session.account._id};
+    const docs = await Domo.find(query).populate('owner', 'username').select('name age food owner').lean()
+      .exec();
 
     return res.json({ domos: docs });
   } catch (err) {
@@ -43,7 +44,7 @@ const getDomos = async (req, res) => {
 };
 
 module.exports = {
-  makerPage,
+  homePage,
   makeDomo,
   getDomos,
 };

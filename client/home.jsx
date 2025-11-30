@@ -25,7 +25,7 @@ const DomoForm = (props) => {
         <form id="domoForm"
             onSubmit={(e) => handleDomo(e, props.triggerReload)}
             name="domoForm"
-            action="/maker"
+            action="/home"
             method="POST"
             className="domoForm"
         >
@@ -44,7 +44,9 @@ const DomoForm = (props) => {
 };
 
 const DomoList = (props) => {
-    const [domos, setDomos] = useState(props.domos);
+    //const [domos, setDomos] = useState(props.domos);
+    const { domos: initialDomos, reloadDomos, me, setMe } = props;
+    const [domos, setDomos] = useState(initialDomos);
 
     useEffect(() => {
         const loadDomosFromServer = async () => {
@@ -64,9 +66,23 @@ const DomoList = (props) => {
     }
 
     const domoNodes = domos.flatMap((domo, i) => {
+        const isFollowing = props.me?.following?.map(id => id.toString()).includes(domo.owner._id.toString());
+        const showFollowButton = props.me && props.me._id.toString() !== domo.owner._id.toString();
+
         const node = (
             <div key={domo.id} className="domo">
                 <img src="/assets/img/domoface.jpeg" alt="domo face" className="domoFace" />
+
+                <h3 className="domoOwner">Posted By: {domo.owner.username}
+                    {showFollowButton && (
+                        <FollowButton
+                            ownerId={domo.owner._id.toString()}
+                            isFollowing={isFollowing}
+                            onUpdate={setMe}
+                            username={domo.owner.username}
+                        />
+                    )}</h3>
+
                 <h3 className="domoName">Name: {domo.name}</h3>
                 <h3 className="domoAge">Age: {domo.age}</h3>
                 <h3 className="domoFood">Favorite Food: {domo.food}</h3>
@@ -78,7 +94,7 @@ const DomoList = (props) => {
             return [
                 node,
                 <div key={`placeholder-${i}`} className="domo">
-                    <h3 className="domoName">placeholder</h3>
+                    <h3 className="domoName">placeholder (ad)</h3>
                 </div>
             ];
         }
@@ -93,8 +109,52 @@ const DomoList = (props) => {
     );
 };
 
+function FollowButton({ ownerId, isFollowing, onUpdate, username }) {
+    const handleToggle = async () => {
+        const route = isFollowing ? '/unfollow' : '/follow';
+        try {
+            const res = await fetch(route, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ targetId: ownerId }),
+            });
+
+            if (res.ok) {
+                // Re-fetch /me to update following list
+                const updatedMe = await fetch('/me').then(r => r.json());
+                onUpdate(updatedMe);
+            } else {
+                console.error('Action failed');
+            }
+        } catch (err) {
+            console.error('Error toggling follow', err);
+        }
+    };
+
+    return (
+        <button onClick={handleToggle}>
+            {isFollowing ? `Unfollow ${username}` : `Follow ${username}`}
+        </button>
+    );
+}
+
 const App = () => {
     const [reloadDomos, setReloadDomos] = useState(false);
+    const [me, setMe] = useState(null);
+
+    useEffect(() => {
+        const fetchMe = async () => {
+            try {
+                const res = await fetch('/me');
+                const data = await res.json();
+                setMe(data);
+            } catch (err) {
+                console.error('Failed to load current user', err);
+            }
+        };
+
+        fetchMe();
+    }, []);
 
     return (
         <div>
@@ -102,7 +162,7 @@ const App = () => {
                 <DomoForm triggerReload={() => setReloadDomos(!reloadDomos)} />
             </div>
             <div id="domos">
-                <DomoList domos={[]} reloadDomos={reloadDomos} />
+                <DomoList domos={[]} reloadDomos={reloadDomos} me={me} setMe={setMe} />
             </div>
         </div>
     );

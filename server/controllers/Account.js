@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const models = require('../models');
 
 const { Account } = models;
@@ -24,9 +25,14 @@ const login = (req, res) => {
       return res.status(401).json({ error: 'Wrong username or password!' });
     }
 
-    req.session.account = Account.toAPI(account);
+    // req.session.account = Account.toAPI(account);
+    req.session.account = {
+      _id: account._id.toString(),
+      username: account.username,
+      following: account.following || [],
+    };
 
-    return res.json({ redirect: '/maker' });
+    return res.json({ redirect: '/home' });
   });
 };
 
@@ -50,8 +56,15 @@ const signup = async (req, res) => {
     const hash = await Account.generateHash(pass);
     const newAccount = new Account({ username, password: hash });
     await newAccount.save();
-    req.session.account = Account.toAPI(newAccount);
-    return res.json({ redirect: '/maker' });
+
+    // req.session.account = Account.toAPI(newAccount);
+    req.session.account = {
+      _id: newAccount._id.toString(),
+      username: newAccount.username,
+      following: newAccount.following || [],
+    };
+
+    return res.json({ redirect: '/home' });
   } catch (err) {
     console.log(err);
     if (err.code === 11000) {
@@ -61,9 +74,68 @@ const signup = async (req, res) => {
   }
 };
 
+const followUser = async (req, res) => {
+  try {
+    const userId = req.session.account._id;
+    let { targetId } = req.body;
+
+    if (userId === targetId) {
+      return res.status(400).json({ error: 'Cannot follow yourself' });
+    }
+
+    // Convert targetId to ObjectId for MongoDB
+    targetId = new mongoose.Types.ObjectId(targetId);
+
+    await Account.updateOne(
+      { _id: userId },
+      { $addToSet: { following: targetId } }, // prevents duplicates
+    );
+
+    return res.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: 'Follow failed' });
+  }
+};
+
+const unfollowUser = async (req, res) => {
+  try {
+    const userId = req.session.account._id;
+    let { targetId } = req.body;
+
+    targetId = new mongoose.Types.ObjectId(targetId);
+
+    await Account.updateOne(
+      { _id: userId },
+      { $pull: { following: targetId } },
+    );
+
+    return res.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: 'Unfollow failed' });
+  }
+};
+
+const getCurrentUser = async (req, res) => {
+  try {
+    const user = await Account.findById(req.session.account._id)
+      .select('username following')
+      .lean()
+      .exec();
+    return res.json(user);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: 'Failed to get user' });
+  }
+};
+
 module.exports = {
   loginPage,
   login,
   logout,
   signup,
+  followUser,
+  unfollowUser,
+  getCurrentUser,
 };

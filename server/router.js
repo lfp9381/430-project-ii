@@ -11,10 +11,16 @@ const router = (app) => {
 
   app.get('/logout', mid.requiresLogin, controllers.Account.logout);
 
-  app.get('/maker', mid.requiresLogin, controllers.Domo.makerPage);
-  app.post('/maker', mid.requiresLogin, controllers.Domo.makeDomo);
+  app.get('/home', mid.requiresLogin, controllers.Domo.homePage);
+  app.post('/home', mid.requiresLogin, controllers.Domo.makeDomo);
 
   app.get('/', mid.requiresSecure, mid.requiresLogout, controllers.Account.loginPage);
+
+  app.post('/follow', mid.requiresLogin, controllers.Account.followUser);
+  app.post('/unfollow', mid.requiresLogin, controllers.Account.unfollowUser);
+  app.get('/me', mid.requiresLogin, controllers.Account.getCurrentUser);
+
+  app.use(mid.pageNotFound);
 };
 
 module.exports = router;
