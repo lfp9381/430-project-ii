@@ -3,89 +3,85 @@ const React = require('react');
 const { useState, useEffect } = React;
 const { createRoot } = require('react-dom/client');
 
-const handleDomo = (e, onDomoAdded) => {
+const handlePost = (e, onPostAdded) => {
     e.preventDefault();
     helper.hideError();
 
-    const name = e.target.querySelector('#domoName').value;
-    const age = e.target.querySelector('#domoAge').value;
-    const food = e.target.querySelector('#domoFood').value;
+    const content = e.target.querySelector('#postContent').value;
 
-    if (!name || !age || !food) {
+    if (!content) {
         helper.handleError('All fields are required!');
         return false;
     }
 
-    helper.sendPost(e.target.action, { name, age, food }, onDomoAdded);
+    helper.sendPost(e.target.action, { content }, onPostAdded);
     return false;
 }
 
-const DomoForm = (props) => {
+const PostForm = (props) => {
     return (
-        <form id="domoForm"
-            onSubmit={(e) => handleDomo(e, props.triggerReload)}
-            name="domoForm"
+        <form id="postForm"
+            onSubmit={(e) => handlePost(e, props.triggerReload)}
+            name="postForm"
             action="/home"
             method="POST"
-            className="domoForm"
+            className="postForm"
         >
-            <label htmlFor="name">Name: </label>
-            <input id="domoName" type="text" name="name" placeholder="Domo Name" />
+            <label htmlFor="content">Content: </label>
+            <input id="postContent" type="text" name="content" placeholder="Post Content" />
 
-            <label htmlFor="food">Fav Food: </label>
-            <input id="domoFood" type="text" name="food" placeholder="Domo Favorite Food" />
-
-            <label htmlFor="age">Age: </label>
-            <input id="domoAge" type="number" min="0" name="age" />
-
-            <input className="makeDomoSubmit" type="submit" value="Make Domo" />
+            <input className="makePostSubmit" type="submit" value="Make Post" />
         </form>
     );
 };
 
-const DomoList = (props) => {
-    //const [domos, setDomos] = useState(props.domos);
-    const { domos: initialDomos, reloadDomos, me, setMe } = props;
-    const [domos, setDomos] = useState(initialDomos);
+const PostList = (props) => {
+    //const [posts, setPosts] = useState(props.posts);
+    const { posts: initialPosts, reloadPosts, me, setMe } = props;
+    const [posts, setPosts] = useState(initialPosts);
 
     useEffect(() => {
-        const loadDomosFromServer = async () => {
-            const response = await fetch('/getDomos');
+        const loadPostsFromServer = async () => {
+            const response = await fetch('/getPosts');
             const data = await response.json();
-            setDomos(data.domos);
+            setPosts(data.posts);
         };
-        loadDomosFromServer();
-    }, [props.reloadDomos]);
+        loadPostsFromServer();
+    }, [props.reloadPosts]);
 
-    if (domos.length === 0) {
+    if (posts.length === 0) {
         return (
-            <div className="domoList">
-                <h3 className="emptyDomo">No Domos yet!</h3>
+            <div className="postList">
+                <h3 className="emptyPost">No posts yet!</h3>
             </div>
         );
     }
 
-    const domoNodes = domos.flatMap((domo, i) => {
-        const isFollowing = props.me?.following?.map(id => id.toString()).includes(domo.owner._id.toString());
-        const showFollowButton = props.me && props.me._id.toString() !== domo.owner._id.toString();
+    const postNodes = posts.flatMap((post, i) => {
+
+        if (!post.creator) {
+            console.error("Post missing creator:", post);
+            return null;
+        }
+
+        const isFollowing = props.me?.following?.map(id => id.toString()).includes(post.creator._id.toString());
+        const showFollowButton = props.me && props.me._id.toString() !== post.creator._id.toString();
 
         const node = (
-            <div key={domo.id} className="domo">
+            <div key={post._id} className="post">
                 <img src="/assets/img/domoface.jpeg" alt="domo face" className="domoFace" />
 
-                <h3 className="domoOwner">Posted By: {domo.owner.username}
+                <h3 className="postCreator">Posted By: {post.creator.username}
                     {showFollowButton && (
                         <FollowButton
-                            ownerId={domo.owner._id.toString()}
+                            creatorId={post.creator._id.toString()}
                             isFollowing={isFollowing}
                             onUpdate={setMe}
-                            username={domo.owner.username}
+                            username={post.creator.username}
                         />
                     )}</h3>
 
-                <h3 className="domoName">Name: {domo.name}</h3>
-                <h3 className="domoAge">Age: {domo.age}</h3>
-                <h3 className="domoFood">Favorite Food: {domo.food}</h3>
+                <h3 className="postContent">{post.content}</h3>
             </div>
         );
 
@@ -93,8 +89,8 @@ const DomoList = (props) => {
         if ((i + 1) % 5 === 0) {
             return [
                 node,
-                <div key={`placeholder-${i}`} className="domo">
-                    <h3 className="domoName">placeholder (ad)</h3>
+                <div key={`placeholder-${i}`} className="post">
+                    <h3 className="postContent">placeholder (ad)</h3>
                 </div>
             ];
         }
@@ -103,20 +99,20 @@ const DomoList = (props) => {
     });
 
     return (
-        <div className="domoList">
-            {domoNodes}
+        <div className="postList">
+            {postNodes}
         </div>
     );
 };
 
-function FollowButton({ ownerId, isFollowing, onUpdate, username }) {
+function FollowButton({ creatorId, isFollowing, onUpdate, username }) {
     const handleToggle = async () => {
         const route = isFollowing ? '/unfollow' : '/follow';
         try {
             const res = await fetch(route, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ targetId: ownerId }),
+                body: JSON.stringify({ targetId: creatorId }),
             });
 
             if (res.ok) {
@@ -139,7 +135,7 @@ function FollowButton({ ownerId, isFollowing, onUpdate, username }) {
 }
 
 const App = () => {
-    const [reloadDomos, setReloadDomos] = useState(false);
+    const [reloadPosts, setReloadPosts] = useState(false);
     const [me, setMe] = useState(null);
 
     useEffect(() => {
@@ -158,11 +154,11 @@ const App = () => {
 
     return (
         <div>
-            <div id="makeDomo">
-                <DomoForm triggerReload={() => setReloadDomos(!reloadDomos)} />
+            <div id="makePost">
+                <PostForm triggerReload={() => setReloadPosts(!reloadPosts)} />
             </div>
-            <div id="domos">
-                <DomoList domos={[]} reloadDomos={reloadDomos} me={me} setMe={setMe} />
+            <div id="posts">
+                <PostList posts={[]} reloadPosts={reloadPosts} me={me} setMe={setMe} />
             </div>
         </div>
     );

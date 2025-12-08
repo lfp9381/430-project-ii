@@ -30,6 +30,7 @@ const login = (req, res) => {
       _id: account._id.toString(),
       username: account.username,
       following: account.following || [],
+      blocking: account.blocking || [],
     };
 
     return res.json({ redirect: '/home' });
@@ -62,6 +63,7 @@ const signup = async (req, res) => {
       _id: newAccount._id.toString(),
       username: newAccount.username,
       following: newAccount.following || [],
+      blocking: newAccount.blocking || [],
     };
 
     return res.json({ redirect: '/home' });
@@ -117,10 +119,53 @@ const unfollowUser = async (req, res) => {
   }
 };
 
+const blockUser = async (req, res) => {
+  try {
+    const userId = req.session.account._id;
+    let { targetId } = req.body;
+
+    if (userId === targetId) {
+      return res.status(400).json({ error: 'Cannot block yourself' });
+    }
+
+    // Convert targetId to ObjectId for MongoDB
+    targetId = new mongoose.Types.ObjectId(targetId);
+
+    await Account.updateOne(
+      { _id: userId },
+      { $addToSet: { blocking: targetId } }, // prevents duplicates
+    );
+
+    return res.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: 'Block failed' });
+  }
+};
+
+const unblockUser = async (req, res) => {
+  try {
+    const userId = req.session.account._id;
+    let { targetId } = req.body;
+
+    targetId = new mongoose.Types.ObjectId(targetId);
+
+    await Account.updateOne(
+      { _id: userId },
+      { $pull: { blocking: targetId } },
+    );
+
+    return res.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: 'Unblock failed' });
+  }
+};
+
 const getCurrentUser = async (req, res) => {
   try {
     const user = await Account.findById(req.session.account._id)
-      .select('username following')
+      .select('username following blocking')
       .lean()
       .exec();
     return res.json(user);
@@ -137,5 +182,7 @@ module.exports = {
   signup,
   followUser,
   unfollowUser,
+  blockUser,
+  unblockUser,
   getCurrentUser,
 };

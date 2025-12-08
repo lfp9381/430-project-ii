@@ -1,7 +1,7 @@
 {
-  "name": "domomaker",
+  "name": "simple-social-media-site",
   "version": "1.0.0",
-  "description": "A Simple Login Example using Node.js, Mongo and Redis",
+  "description": "A simple social media site using Node.js, Mongo and Redis",
   "main": "./server/app.js",
   "scripts": {
     "webpack": "webpack",
