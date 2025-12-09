@@ -15,9 +15,13 @@ const makePost = async (req, res) => {
   };
 
   try {
-    const newPost = new Post(postData);
+    let newPost = new Post(postData);
     await newPost.save();
-    return res.status(201).json({ content: newPost.content });
+
+    // Populate the creator field so the frontend can access username and _id
+    newPost = await newPost.populate('creator', 'username');
+
+    return res.status(201).json(newPost); // send the full post object
   } catch (err) {
     console.log(err);
     if (err.code === 11000) {
@@ -29,7 +33,7 @@ const makePost = async (req, res) => {
 
 const getPosts = async (req, res) => {
   try {
-    const query = { };
+    const query = {};
     // const query = {creator: req.session.account._id};
     const docs = await Post.find(query).populate('creator', 'username').lean()
       .exec();

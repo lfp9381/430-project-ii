@@ -3,6 +3,34 @@ const React = require('react');
 const { useState, useEffect } = React;
 const { createRoot } = require('react-dom/client');
 
+function shuffleWithFollowBias(posts, me, followWeight = 0.6) {
+    if (!me || !me.following) return posts;
+
+    // Remove any posts without creator
+    posts = posts.filter(p => p.creator && p.creator._id);
+
+    const followingSet = new Set(me.following.map(id => id.toString()));
+    const followed = posts.filter(p => followingSet.has(p.creator._id.toString()));
+    const unfollowed = posts.filter(p => !followingSet.has(p.creator._id.toString()));
+
+    const result = [];
+    const total = posts.length;
+
+    for (let i = 0; i < total; i++) {
+        const pickFollowed = Math.random() < followWeight;
+
+        if (pickFollowed && followed.length > 0) {
+            result.push(followed.splice(Math.floor(Math.random() * followed.length), 1)[0]);
+        } else if (unfollowed.length > 0) {
+            result.push(unfollowed.splice(Math.floor(Math.random() * unfollowed.length), 1)[0]);
+        } else if (followed.length > 0) {
+            result.push(followed.splice(Math.floor(Math.random() * followed.length), 1)[0]);
+        }
+    }
+
+    return result;
+}
+
 const handlePost = (e, onPostAdded) => {
     e.preventDefault();
     helper.hideError();
@@ -14,14 +42,19 @@ const handlePost = (e, onPostAdded) => {
         return false;
     }
 
-    helper.sendPost(e.target.action, { content }, onPostAdded);
+    helper.sendPost(e.target.action, { content }, (response) => {
+        if (response._id) {
+            onPostAdded(response);
+        }
+    });
+
     return false;
-}
+};
 
 const PostForm = (props) => {
     return (
         <form id="postForm"
-            onSubmit={(e) => handlePost(e, props.triggerReload)}
+            onSubmit={(e) => handlePost(e, props.onNewPost)}
             name="postForm"
             action="/home"
             method="POST"
@@ -36,20 +69,14 @@ const PostForm = (props) => {
 };
 
 const PostList = (props) => {
-    //const [posts, setPosts] = useState(props.posts);
-    const { posts: initialPosts, reloadPosts, me, setMe } = props;
-    const [posts, setPosts] = useState(initialPosts);
+    const { posts, newPosts, me, setMe, activeTab } = props;
 
-    useEffect(() => {
-        const loadPostsFromServer = async () => {
-            const response = await fetch('/getPosts');
-            const data = await response.json();
-            setPosts(data.posts);
-        };
-        loadPostsFromServer();
-    }, [props.reloadPosts]);
+    const [basePosts, setBasePosts] = useState([]);
+    const [hasShuffled, setHasShuffled] = useState(false);
 
-    if (posts.length === 0) {
+    const displayPosts = [...newPosts, ...posts];
+
+    if (displayPosts.length === 0) {
         return (
             <div className="postList">
                 <h3 className="emptyPost">No posts yet!</h3>
@@ -57,10 +84,12 @@ const PostList = (props) => {
         );
     }
 
-    const postNodes = posts.flatMap((post, i) => {
+    // Mapping post data to displayed sections
+    const postNodes = displayPosts.flatMap((post, i) => {
 
+        // Check for any broken posts (posts without creator)
         if (!post.creator) {
-            console.error("Post missing creator:", post);
+            console.error("Post missing creator: ", post);
             return null;
         }
 
@@ -137,28 +166,75 @@ function FollowButton({ creatorId, isFollowing, onUpdate, username }) {
 const App = () => {
     const [reloadPosts, setReloadPosts] = useState(false);
     const [me, setMe] = useState(null);
+    const [newPosts, setNewPosts] = useState([]);
+
+    // Home and following tabs
+    const [activeTab, setActiveTab] = useState('home');
+    const [homePosts, setHomePosts] = useState([]);
+    const [followingPosts, setFollowingPosts] = useState([]);
 
     useEffect(() => {
-        const fetchMe = async () => {
+        const loadUserAndPosts = async () => {
             try {
                 const res = await fetch('/me');
-                const data = await res.json();
-                setMe(data);
+                const meData = await res.json();
+                setMe(meData);
+
+                const postRes = await fetch('/getPosts');
+                const data = await postRes.json();
+                const allPosts = data.posts;
+
+                // Shuffle Home tab (60% bias)
+                setHomePosts(shuffleWithFollowBias(allPosts, meData, 0.6));
+
+                // Shuffle Following tab (100% bias)
+                const followingSet = new Set(meData.following.map(id => id.toString()));
+                const followingOnly = allPosts.filter(p => p.creator && followingSet.has(p.creator._id.toString()));
+                setFollowingPosts(shuffleWithFollowBias(followingOnly, meData, 1.0));
             } catch (err) {
-                console.error('Failed to load current user', err);
+                console.error(err);
             }
         };
 
-        fetchMe();
+        loadUserAndPosts();
     }, []);
 
     return (
         <div>
-            <div id="makePost">
-                <PostForm triggerReload={() => setReloadPosts(!reloadPosts)} />
+            <div className="tabs">
+                <button
+                    className={activeTab === 'home' ? 'active' : ''}
+                    onClick={() => setActiveTab('home')}
+                >
+                    Home
+                </button>
+                <button
+                    className={activeTab === 'following' ? 'active' : ''}
+                    onClick={() => setActiveTab('following')}
+                >
+                    Following
+                </button>
             </div>
+
+            <div id="makePost">
+                <PostForm onNewPost={(post) => setNewPosts(prev => [post, ...prev])} />
+            </div>
+
             <div id="posts">
-                <PostList posts={[]} reloadPosts={reloadPosts} me={me} setMe={setMe} />
+                <PostList
+                    posts={activeTab === 'following' ? followingPosts : homePosts}
+                    reloadPosts={reloadPosts}
+                    newPosts={
+                        activeTab === 'following'
+                            ? newPosts.filter(
+                                p => me.following.includes(p.creator._id) || p.creator._id === me._id
+                            )
+                            : newPosts
+                    }
+                    me={me}
+                    setMe={setMe}
+                    activeTab={activeTab}
+                />
             </div>
         </div>
     );
