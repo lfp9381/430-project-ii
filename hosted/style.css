@@ -1,23 +1,96 @@
-html, body {
+* {
+    font-family: 'Roboto', sans-serif;
+    color: white;
+}
+
+button {
+    background-color: #4376e4;
+    border-radius: 7px;
+    border: none;
+    cursor: pointer;
+}
+
+.tabs {
+    display: flex;
+    justify-content: center;
+    margin-top: 35px;
+    margin-bottom: 35px;
+}
+
+.tabButton {
+    background-color: #ffffff00;
+    font-size: 32px;
+    font-weight: bolder;
+    margin-left: 110px;
+    margin-right: 110px;
+}
+
+.tabButton.active {
+    color: #a5a5a5;
+}
+
+.tabButton:hover:not(.active) {
+    color: #6a96f5;
+}
+
+.follow-btn {
+    float: right;
+    margin-right: 25px;
+    height: 30px;
+}
+
+.follow-btn.follow {
+    background-color: #4376e4;
+}
+
+.follow-btn.follow:hover {
+    background-color: #3967ca;
+}
+
+.follow-btn.unfollow {
+    background-color: #838383;
+}
+
+.follow-btn.unfollow:hover {
+    background-color: #747474;
+}
+
+.ad {
+    background-color: #554557 !important;
+    border: 6px dashed #614d63 !important;
+    box-sizing: border-box;
+    height: 160px;
+    text-align: center;
+}
+
+.adContent {
+    color: #e7b23e;
+    margin-top: 60px;
+    font-weight: bold !important;
+}
+
+html,
+body {
     height: 100%;
     width: 100%;
     margin: 0;
     padding: 0;
     overflow-x: hidden;
+    background-color: #1f1f1f;
 }
 
 #logo {
     height: 40px;
     width: 40;
     padding-top: 5px;
-    float:left;
+    float: left;
     border-radius: 8px;
 }
 
 nav {
     width: 100%;
     height: 50px;
-    background-color: #55acee;
+    background-color: #333333;
 }
 
 nav:nth-child(1) {
@@ -33,29 +106,33 @@ nav:nth-child(1) {
     float: left;
 }
 
-.navlink a, .navlink a:link, .navlink a:visited, .navlink a:hover, .navlink a:active {
+.navlink a,
+.navlink a:link,
+.navlink a:visited,
+.navlink a:hover,
+.navlink a:active {
     color: white;
     text-decoration: none;
     padding: 5px;
     border-radius: 4px;
-    background-color: #55acee;
+    background-color: #333333;
     transition: background-color 0.4s ease;
 }
 
 .navlink a:hover {
     transition: background-color 0.8s ease;
-    background-color: #66bdff;
+    background-color: #333333;
 }
 
 .postForm {
-    border: 2px solid #338acc;
-    height: 35px;
-    width: 1050px;
-    margin-top:0px;
-    padding-top:10px;
-    background-color: #55acee;
-    border-bottom-right-radius: 4px;
-    border-top-right-radius: 4px;
+    border: 8px solid #a7a7a7;
+    height: 120;
+    width: 40%;
+    padding-top: 10px;
+    background-color: #d9d9d9;
+    margin: auto;
+    border-radius: 7px;
+    box-sizing: border-box;
 }
 
 .postForm label {
@@ -68,26 +145,38 @@ nav:nth-child(1) {
 }
 
 .postForm input[type=text] {
-    float:left;
+    float: left;
+    color: black;
+    height: 40px;
+    width: 300px;
+    margin-left: 10px;
+    margin-top: auto;
+    border: none;
+    border-radius: 7px;
 }
 
 .makePostSubmit {
     transition: background-color 0.4s ease;
     display: inline;
     width: 90px;
-    background-color: #55acee;
+    background-color: #333333;
     border-radius: 2px;
     color: white;
     text-decoration: none;
+    border-radius: 7px;
+    margin-left: 10px;
 }
 
-.makePostSubmit:link, .makePostSubmit:visited, .makePostSubmit:hover, .makePostSubmit:active {
+.makePostSubmit:link,
+.makePostSubmit:visited,
+.makePostSubmit:hover,
+.makePostSubmit:active {
     color: white;
 }
 
 .makePostSubmit:hover {
     transition: background-color 0.4s ease;
-    background-color: #338acc;
+    background-color: #333333;
 }
 
 .mainForm {
@@ -118,33 +207,40 @@ nav:nth-child(1) {
     margin-top: 14px;
     font-size: 1.2em;
     width: 100px;
-    background-color: #55acee;
+    background-color: #333333;
     border-radius: 2px;
-    border-color: #66acee;
+    border-color: #333333;
     padding: 3px 0px;
     color: white;
     text-decoration: none;
 }
 
-.formSubmit:link, .formSubmit:visited, .formSubmit:hover, .formSubmit:active {
+.formSubmit:link,
+.formSubmit:visited,
+.formSubmit:hover,
+.formSubmit:active {
     color: white;
 }
 
 .formSubmit:hover {
     transition: background-color 0.4s ease;
-    background-color: #338acc;
+    background-color: #333333;
 }
 
-#user, #pass, #pass2 {
+#user,
+#pass,
+#pass2 {
     text-align: center;
     font-size: 1.1em;
     width: 180px;
     border-radius: 6px;
 }
 
-#user:focus, #pass:focus, #pass2:focus {
+#user:focus,
+#pass:focus,
+#pass2:focus {
     outline: none;
-    box-shadow: 0px 0px 1px 1px #55acee;
+    box-shadow: 0px 0px 1px 1px #333333;
 }
 
 .hidden {
@@ -171,14 +267,12 @@ nav:nth-child(1) {
 #speech {
     height: 120px;
     width: 250px;
-    z-index:300;
+    z-index: 300;
 }
 
 #errorMessage {
     font-size: 1.2em;
-    font-weight: bold;
-    color: red;
-    font-style: italic;
+    color: rgb(189, 94, 94);
 }
 
 #post {
@@ -188,15 +282,13 @@ nav:nth-child(1) {
     height: 450px;
     width: 300px;
     -ms-transform: rotate(330deg);
-    -webkit-transform: rotate(330deg); 
+    -webkit-transform: rotate(330deg);
     transform: rotate(330deg);
 }
 
 #posts {
     width: 40%;
     min-width: 400px;
-    border: 2px solid #55acee;
-    border-radius: 4px;
     margin: 0 auto;
     margin-top: 100px;
 }
@@ -204,31 +296,33 @@ nav:nth-child(1) {
 .post {
     width: 95%;
     margin: 0 auto;
-    margin-top: 2px;
+    margin-top: 8px;
     margin-bottom: 2px;
-    border: 2px solid #55acee;
-    border-radius: 4px;
-    background-color: #55acee;
+    border: 2px solid #474747;
+    border-radius: 7px;
+    background-color: #474747;
     padding: 10px;
-    min-height:60px;
-    overflow: hidden;
+    min-height: 60px;
+    /* overflow: hidden; */
+    overflow-wrap: break-word;
+    border: 8px solid #3f3f3f;
 }
 
 .post:hover {
     transition: border-color 0.2s ease-out;
-    border-color: rgba(255,255,255, 0.8);
+    border-color: rgba(255, 255, 255, 0.8);
     transition: background-color 2.6s ease-out;
-    background-color: #66bfff;
+    background-color: #474747;
 }
 
-img.domoFace {
+img.profileIcon {
     margin-left: 25px;
     margin-right: 10px;
     height: 50px;
     width: 50px;
     border-radius: 4px;
-    margin-top:10px;
-    float:left;
+    margin-top: 10px;
+    float: left;
 }
 
 h3.emptyPost {
@@ -240,11 +334,12 @@ h3.emptyPost {
 }
 
 h3.postContent {
-    float:center;
-    width: 200px;
-    font-weight: bold;
-    padding-left:250;
+    /* float: center; */
+    /* width: 200px; */
+    /* font-weight: bold; */
+    /* padding-left: 250; */
     font-size: 1.0em;
+    font-weight: lighter;
 }
 
 .post:first-child {
@@ -252,5 +347,5 @@ h3.postContent {
 }
 
 .post:last-child {
-    margin-bottom:10px;
+    margin-bottom: 10px;
 }
