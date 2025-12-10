@@ -10,6 +10,8 @@ button {
     cursor: pointer;
 }
 
+/* Tabs */
+
 .tabs {
     display: flex;
     justify-content: center;
@@ -23,20 +25,25 @@ button {
     font-weight: bolder;
     margin-left: 110px;
     margin-right: 110px;
-}
-
-.tabButton.active {
     color: #a5a5a5;
 }
 
-.tabButton:hover:not(.active) {
-    color: #6a96f5;
+.tabButton.active {
+    color: white;
 }
+
+.tabButton:hover:not(.active) {
+    color: #83a8f8;
+}
+
+/* Follow Button */
 
 .follow-btn {
     float: right;
-    margin-right: 25px;
+    margin-right: 15px;
     height: 30px;
+    width: 70px;
+    margin-top: -15px;
 }
 
 .follow-btn.follow {
@@ -55,6 +62,40 @@ button {
     background-color: #747474;
 }
 
+/* Block Button */
+
+.block-btn {
+    float: right;
+    margin-right: 10px;
+    height: 30px;
+    width: 70px;
+    margin-top: -15px;
+}
+
+.block-btn.block {
+    background-color: #e44843;
+}
+
+.block-btn.block:hover {
+    background-color: #f75c57;
+}
+
+.block-btn.unblock {
+    background-color: #838383;
+}
+
+.block-btn.unblock:hover {
+    background-color: #747474;
+}
+
+.blockedPostContent {
+    color: #1f1f1f;
+    font-size: 1.0em;
+    font-weight: lighter;
+}
+
+/* Ads */
+
 .ad {
     background-color: #554557 !important;
     border: 6px dashed #614d63 !important;
@@ -67,6 +108,13 @@ button {
     color: #e7b23e;
     margin-top: 60px;
     font-weight: bold !important;
+}
+
+/* 404 Page */
+
+.errorPage {
+    margin: 300px;
+    margin-bottom: 10px;
 }
 
 html,
@@ -133,6 +181,8 @@ nav:nth-child(1) {
     margin: auto;
     border-radius: 7px;
     box-sizing: border-box;
+    display: flex;
+    justify-content: center;
 }
 
 .postForm label {
@@ -150,7 +200,7 @@ nav:nth-child(1) {
     height: 40px;
     width: 300px;
     margin-left: 10px;
-    margin-top: auto;
+    margin-top: 22px;
     border: none;
     border-radius: 7px;
 }
@@ -159,12 +209,14 @@ nav:nth-child(1) {
     transition: background-color 0.4s ease;
     display: inline;
     width: 90px;
+    height: 30px;
     background-color: #333333;
     border-radius: 2px;
     color: white;
     text-decoration: none;
     border-radius: 7px;
     margin-left: 10px;
+    margin-top: 27px;
 }
 
 .makePostSubmit:link,
@@ -197,6 +249,7 @@ nav:nth-child(1) {
     margin-right: 10px;
     text-align: right;
     font-size: 1.2em;
+    float: left;
 }
 
 .formSubmit {
@@ -204,7 +257,6 @@ nav:nth-child(1) {
     display: block;
     text-align: center;
     margin: 0 auto;
-    margin-top: 14px;
     font-size: 1.2em;
     width: 100px;
     background-color: #333333;
@@ -213,6 +265,25 @@ nav:nth-child(1) {
     padding: 3px 0px;
     color: white;
     text-decoration: none;
+    margin-top: 100px;
+}
+
+#signupButton {
+    float: right;
+    margin-right: 35px;
+}
+
+#loginButton {
+    float: left;
+    margin-left: 35px;
+}
+
+.loginButtons {
+    height: 300px;
+    width: 350px;
+    margin: 0 auto;
+    font-size: 1.2em;
+    margin-top: -140px;
 }
 
 .formSubmit:link,
@@ -234,6 +305,8 @@ nav:nth-child(1) {
     font-size: 1.1em;
     width: 180px;
     border-radius: 6px;
+    float: right;
+    color: black;
 }
 
 #user:focus,
@@ -245,34 +318,6 @@ nav:nth-child(1) {
 
 .hidden {
     display: none;
-}
-
-#errMessage {
-    top: 250px;
-    width: 250px;
-    height: 650px;
-    position: absolute;
-    z-index: 200;
-    right: 0px;
-    overflow: hidden;
-}
-
-#errMessage h3 {
-    width: 200px;
-    position: absolute;
-    top: 0px;
-    left: 20px;
-}
-
-#speech {
-    height: 120px;
-    width: 250px;
-    z-index: 300;
-}
-
-#errorMessage {
-    font-size: 1.2em;
-    color: rgb(189, 94, 94);
 }
 
 #post {
@@ -303,7 +348,6 @@ nav:nth-child(1) {
     background-color: #474747;
     padding: 10px;
     min-height: 60px;
-    /* overflow: hidden; */
     overflow-wrap: break-word;
     border: 8px solid #3f3f3f;
 }
@@ -334,10 +378,6 @@ h3.emptyPost {
 }
 
 h3.postContent {
-    /* float: center; */
-    /* width: 200px; */
-    /* font-weight: bold; */
-    /* padding-left: 250; */
     font-size: 1.0em;
     font-weight: lighter;
 }

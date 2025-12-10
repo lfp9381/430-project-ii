@@ -3,10 +3,9 @@ const React = require('react');
 const { useState, useEffect } = React;
 const { createRoot } = require('react-dom/client');
 
-function shuffleWithFollowBias(posts, me, followWeight = 0.6) {
+const shuffleWithFollowBias = (posts, me, followWeight = 0.6) => {
     if (!me || !me.following) return posts;
 
-    // Remove any posts without creator
     posts = posts.filter(p => p.creator && p.creator._id);
 
     const followingSet = new Set(me.following.map(id => id.toString()));
@@ -29,11 +28,10 @@ function shuffleWithFollowBias(posts, me, followWeight = 0.6) {
     }
 
     return result;
-}
+};
 
 const handlePost = (e, onPostAdded) => {
     e.preventDefault();
-    helper.hideError();
 
     const input = e.target.querySelector('#postContent');
     const content = input.value;
@@ -46,37 +44,37 @@ const handlePost = (e, onPostAdded) => {
     helper.sendPost(e.target.action, { content }, (response) => {
         if (response._id) {
             onPostAdded(response);
-            input.value = ''; // Clears input after posting
+            input.value = '';
         }
     });
 
     return false;
 };
 
-const PostForm = (props) => {
-    return (
-        <form id="postForm"
-            onSubmit={(e) => handlePost(e, props.onNewPost)}
-            name="postForm"
-            action="/home"
-            method="POST"
-            className="postForm"
-        >
-            {/* <label htmlFor="content"></label> */}
-            <input id="postContent" type="text" name="content" placeholder="Shout into the void!" />
-
-            <input className="makePostSubmit" type="submit" value="Post" />
-        </form>
-    );
-};
+const PostForm = (props) => (
+    <form id="postForm"
+        onSubmit={(e) => handlePost(e, props.onNewPost)}
+        name="postForm"
+        action="/home"
+        method="POST"
+        className="postForm"
+    >
+        <input id="postContent" type="text" name="content" placeholder=" Shout into the void!" />
+        <input className="makePostSubmit" type="submit" value="Post" />
+    </form>
+);
 
 const PostList = (props) => {
-    const { posts, newPosts, me, setMe, activeTab } = props;
+    const { posts, newPosts, me, setMe, activeTab, blockedSet, setBlockedSet, updateFollowingPosts, allPosts } = props;
 
-    const [basePosts, setBasePosts] = useState([]);
-    const [hasShuffled, setHasShuffled] = useState(false);
+    // Filters the following tab
+    const filteredNewPosts = activeTab === 'following' && me
+        ? newPosts.filter(p => me.following.includes(p.creator._id) || p.creator._id === me._id)
+        : newPosts;
 
-    const displayPosts = [...newPosts, ...posts];
+    // Ensures no posts are duplicated by mistake
+    const displayPosts = [...filteredNewPosts, ...posts]
+        .filter((p, i, arr) => p && arr.findIndex(x => x._id === p._id) === i);
 
     if (displayPosts.length === 0) {
         return (
@@ -86,38 +84,25 @@ const PostList = (props) => {
         );
     }
 
-    // Mapping post data to displayed sections
     const postNodes = displayPosts.flatMap((post, i) => {
-
-        // Check for any broken posts (posts without creator)
         if (!post.creator) {
             console.error("Post missing creator: ", post);
             return null;
         }
 
-        // Following
         const isFollowing = props.me?.following?.map(id => id.toString()).includes(post.creator._id.toString());
         const showFollowButton = props.me && props.me._id.toString() !== post.creator._id.toString();
 
-        // Blocking
         const showBlockButton = props.me && props.me._id.toString() !== post.creator._id.toString();
         const isBlocked = props.blockedSet?.has(post.creator._id.toString());
-        const postContent = isBlocked ? "Post from blocked user" : post.content;
+        const postContent = isBlocked ? "Blocked message" : post.content;
+        const postContentClass = isBlocked ? "blockedPostContent" : "postContent";
 
         const node = (
             <div key={post._id} className="post">
                 <img src="/assets/img/profile-icon.jpg" alt="profile icon" className="profileIcon" />
 
                 <h3 className="postCreator">@{post.creator.username} says:
-                    {showFollowButton && (
-                        <FollowButton
-                            creatorId={post.creator._id.toString()}
-                            isFollowing={isFollowing}
-                            onUpdate={setMe}
-                            username={post.creator.username}
-                            className="follow-btn"
-                        />
-                    )}
                     {showBlockButton && (
                         <BlockButton
                             creatorId={post.creator._id.toString()}
@@ -126,15 +111,26 @@ const PostList = (props) => {
                             me={props.me}
                             onUpdate={props.setMe}
                             username={post.creator.username}
+                            className="block-btn"
+                        />
+                    )}
+                    {showFollowButton && (
+                        <FollowButton
+                            creatorId={post.creator._id.toString()}
+                            isFollowing={isFollowing}
+                            onUpdate={setMe}
+                            username={post.creator.username}
+                            className="follow-btn"
+                            updateFollowingPosts={updateFollowingPosts}
+                            allPosts={allPosts}
                         />
                     )}
                 </h3>
 
-                <h3 className="postContent">{postContent}</h3>
+                <h3 className={postContentClass}>{postContent}</h3>
             </div>
         );
 
-        // Displays an 'ad' after every 5 posts
         if ((i + 1) % 5 === 0) {
             return [
                 node,
@@ -154,7 +150,7 @@ const PostList = (props) => {
     );
 };
 
-function FollowButton({ creatorId, isFollowing, onUpdate, username, className }) {
+const FollowButton = ({ creatorId, isFollowing, onUpdate, username, className, updateFollowingPosts, allPosts }) => {
     const handleToggle = async () => {
         const route = isFollowing ? '/unfollow' : '/follow';
         try {
@@ -167,11 +163,15 @@ function FollowButton({ creatorId, isFollowing, onUpdate, username, className })
             if (res.ok) {
                 const updatedMe = await fetch('/me').then(r => r.json());
                 onUpdate(updatedMe);
+
+                if (updateFollowingPosts && allPosts) {
+                    updateFollowingPosts(updatedMe, allPosts);
+                }
             } else {
-                console.error('Action failed');
+                console.error('Follow/unfollow action failed!');
             }
         } catch (err) {
-            console.error('Error toggling follow', err);
+            console.error('Error toggling follow!', err);
         }
     };
 
@@ -182,9 +182,9 @@ function FollowButton({ creatorId, isFollowing, onUpdate, username, className })
             {isFollowing ? `Unfollow` : `Follow`}
         </button>
     );
-}
+};
 
-function BlockButton({ creatorId, blockedSet, setBlockedSet, me, onUpdate, username }) {
+const BlockButton = ({ creatorId, blockedSet, setBlockedSet, me, onUpdate, username, className }) => {
     const isBlocked = blockedSet.has(creatorId);
 
     const handleToggle = async () => {
@@ -197,7 +197,6 @@ function BlockButton({ creatorId, blockedSet, setBlockedSet, me, onUpdate, usern
             });
 
             if (res.ok) {
-                // Temporarily update the blocked set for this session
                 setBlockedSet(prev => {
                     const newSet = new Set(prev);
                     if (isBlocked) {
@@ -208,7 +207,6 @@ function BlockButton({ creatorId, blockedSet, setBlockedSet, me, onUpdate, usern
                     return newSet;
                 });
 
-                // If blocking, unfollow this account
                 if (!isBlocked && me.following.includes(creatorId)) {
                     const unfollowRes = await fetch('/unfollow', {
                         method: 'POST',
@@ -220,66 +218,65 @@ function BlockButton({ creatorId, blockedSet, setBlockedSet, me, onUpdate, usern
                         onUpdate(updatedMe);
                     }
                 }
-
             } else {
-                console.error('Block/unblock action failed');
+                console.error('Block/unblock action failed!');
             }
         } catch (err) {
-            console.error('Error toggling block', err);
+            console.error('Error toggling block!', err);
         }
     };
 
+    const dynamicClass = `${className || ''} ${isBlocked ? 'unblock' : 'block'}`;
+
     return (
-        <button onClick={handleToggle} className={`block-btn ${isBlocked ? 'unblock' : 'block'}`}>
+        <button onClick={handleToggle} className={dynamicClass}>
             {isBlocked ? `Unblock` : `Block`}
         </button>
     );
-}
+};
 
 const App = () => {
     const [reloadPosts, setReloadPosts] = useState(false);
     const [me, setMe] = useState(null);
     const [newPosts, setNewPosts] = useState([]);
 
-    // Home and following tabs
     const [activeTab, setActiveTab] = useState('home');
     const [homePosts, setHomePosts] = useState([]);
     const [followingPosts, setFollowingPosts] = useState([]);
 
-    // Blocking
     const [blockedSet, setBlockedSet] = useState(new Set(me?.blocking || []));
+
+    const updateFollowingPosts = (meData, allPosts) => {
+        if (!meData) return;
+
+        const followingSet = new Set(meData.following.map(id => id.toString()));
+        const followingOnly = allPosts.filter(
+            p => p.creator && followingSet.has(p.creator._id.toString())
+        );
+
+        setFollowingPosts(shuffleWithFollowBias(followingOnly, meData, 1.0));
+    };
 
     useEffect(() => {
         const loadUserAndPosts = async () => {
             try {
-                // Fetches current user info
                 const res = await fetch('/me');
                 const meData = await res.json();
                 setMe(meData);
 
-                // Blocked set
                 const blockedSet = new Set(meData.blocking || []);
                 setBlockedSet(blockedSet);
 
-                // Fetches all posts
                 const postRes = await fetch('/getPosts');
                 const data = await postRes.json();
                 const allPosts = data.posts;
 
-                // Filters blocked user posts
                 const unblockedPosts = allPosts.filter(
                     p => p.creator && !blockedSet.has(p.creator._id.toString())
                 );
 
-                // Shuffles home tab posts with 60% bias towards followed users (pushes them to top)
                 setHomePosts(shuffleWithFollowBias(unblockedPosts, meData, 0.6));
-
-                // Shuffles following tab (exclusively consisting of followed accounts - 100% bias)
-                const followingSet = new Set(meData.following.map(id => id.toString()));
-                const followingOnly = unblockedPosts.filter(
-                    p => p.creator && followingSet.has(p.creator._id.toString())
-                );
-                setFollowingPosts(shuffleWithFollowBias(followingOnly, meData, 1.0));
+                updateFollowingPosts(meData, unblockedPosts);
             } catch (err) {
                 console.error(err);
             }
@@ -311,19 +308,14 @@ const App = () => {
             <div id="posts">
                 <PostList
                     posts={activeTab === 'following' ? followingPosts : homePosts}
-                    reloadPosts={reloadPosts}
-                    newPosts={
-                        activeTab === 'following'
-                            ? newPosts.filter(
-                                p => me.following.includes(p.creator._id) || p.creator._id === me._id
-                            )
-                            : newPosts
-                    }
+                    newPosts={newPosts}
                     me={me}
                     setMe={setMe}
                     activeTab={activeTab}
                     blockedSet={blockedSet}
                     setBlockedSet={setBlockedSet}
+                    updateFollowingPosts={updateFollowingPosts}
+                    allPosts={[...homePosts, ...followingPosts, ...newPosts]}
                 />
             </div>
         </div>

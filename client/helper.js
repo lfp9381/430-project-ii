@@ -3,8 +3,7 @@
    end in an error.
 */
 const handleError = (message) => {
-  document.getElementById('errorMessage').textContent = message;
-  document.getElementById('errMessage').classList.remove('hidden');
+  alert(message);
 };
 
 /* Sends post requests to the server using fetch. Will look for various
@@ -20,27 +19,21 @@ const sendPost = async (url, data, handler) => {
   });
 
   const result = await response.json();
-  document.getElementById('errMessage').classList.add('hidden');
 
-  if(result.redirect) {
+  if (result.redirect) {
     window.location = result.redirect;
   }
 
-  if(result.error) {
+  if (result.error) {
     handleError(result.error);
   }
-  
-  if(handler) {
+
+  if (handler) {
     handler(result);
   }
 };
 
-const hideError = () => {
-    document.getElementById('errMessage').classList.add('hidden');
-};
-
 module.exports = {
-    handleError,
-    sendPost,
-    hideError,
+  handleError,
+  sendPost,
 };
