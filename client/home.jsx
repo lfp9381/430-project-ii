@@ -67,14 +67,22 @@ const PostForm = (props) => (
 const PostList = (props) => {
     const { posts, newPosts, me, setMe, activeTab, blockedSet, setBlockedSet, updateFollowingPosts, allPosts } = props;
 
-    // Filters the following tab
     const filteredNewPosts = activeTab === 'following' && me
         ? newPosts.filter(p => me.following.includes(p.creator._id) || p.creator._id === me._id)
         : newPosts;
 
-    // Ensures no posts are duplicated by mistake
     const displayPosts = [...filteredNewPosts, ...posts]
         .filter((p, i, arr) => p && arr.findIndex(x => x._id === p._id) === i);
+
+    const [isPremium, setIsPremium] = useState(
+        JSON.parse(localStorage.getItem('premiumMode') || 'false')
+    );
+
+    useEffect(() => {
+        const handler = (e) => setIsPremium(e.detail);
+        window.addEventListener('premiumModeChanged', handler);
+        return () => window.removeEventListener('premiumModeChanged', handler);
+    }, []);
 
     if (displayPosts.length === 0) {
         return (
@@ -90,11 +98,10 @@ const PostList = (props) => {
             return null;
         }
 
-        const isFollowing = props.me?.following?.map(id => id.toString()).includes(post.creator._id.toString());
-        const showFollowButton = props.me && props.me._id.toString() !== post.creator._id.toString();
-
-        const showBlockButton = props.me && props.me._id.toString() !== post.creator._id.toString();
-        const isBlocked = props.blockedSet?.has(post.creator._id.toString());
+        const isFollowing = me?.following?.map(id => id.toString()).includes(post.creator._id.toString());
+        const showFollowButton = me && me._id.toString() !== post.creator._id.toString();
+        const showBlockButton = me && me._id.toString() !== post.creator._id.toString();
+        const isBlocked = blockedSet?.has(post.creator._id.toString());
         const postContent = isBlocked ? "Blocked message" : post.content;
         const postContentClass = isBlocked ? "blockedPostContent" : "postContent";
 
@@ -106,10 +113,10 @@ const PostList = (props) => {
                     {showBlockButton && (
                         <BlockButton
                             creatorId={post.creator._id.toString()}
-                            blockedSet={props.blockedSet}
-                            setBlockedSet={props.setBlockedSet}
-                            me={props.me}
-                            onUpdate={props.setMe}
+                            blockedSet={blockedSet}
+                            setBlockedSet={setBlockedSet}
+                            me={me}
+                            onUpdate={setMe}
                             username={post.creator.username}
                             className="block-btn"
                         />
@@ -131,7 +138,8 @@ const PostList = (props) => {
             </div>
         );
 
-        if ((i + 1) % 5 === 0) {
+        // Only show ads if not in premium mode
+        if ((i + 1) % 5 === 0 && !isPremium) {
             return [
                 node,
                 <div key={`placeholder-${i}`} className="post ad">

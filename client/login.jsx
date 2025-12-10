@@ -95,6 +95,9 @@ const init = () => {
         return false;
     });
 
+    localStorage.removeItem('premiumMode');
+    window.premiumMode = false;
+
     root.render(<LoginWindow />);
 };
 

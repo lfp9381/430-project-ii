@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const bcrypt = require('bcrypt');
 const models = require('../models');
 
 const { Account } = models;
@@ -73,6 +74,19 @@ const signup = async (req, res) => {
       return res.status(400).json({ error: 'Username already in use!' });
     }
     return res.status(500).json({ error: 'An error occured!' });
+  }
+};
+
+const settingsPage = async (req, res) => {
+  try {
+    const account = await Account.findById(req.session.account._id).lean().exec();
+
+    return res.render('settings', {
+      meJSON: JSON.stringify(account),
+    });
+  } catch (err) {
+    console.error('Error rendering settings page!', err);
+    return res.status(500).render('500', { error: 'Unable to load settings' });
   }
 };
 
@@ -175,14 +189,50 @@ const getCurrentUser = async (req, res) => {
   }
 };
 
+const changePassword = async (req, res) => {
+  const { oldPass, newPass, newPass2 } = req.body;
+
+  if (!oldPass || !newPass || !newPass2) {
+    return res.status(400).json({ error: 'All fields are required' });
+  }
+
+  if (newPass !== newPass2) {
+    return res.status(400).json({ error: 'New passwords do not match' });
+  }
+
+  try {
+    const account = await Account.findById(req.session.account._id).exec();
+    if (!account) return res.status(400).json({ error: 'User not found' });
+
+    // Compare old password
+    const valid = await bcrypt.compare(oldPass, account.password);
+    if (!valid) {
+      return res.status(400).json({ error: 'Current password is incorrect.' });
+    }
+
+    // Hash new password
+    const newHash = await Account.generateHash(newPass);
+    account.password = newHash;
+
+    await account.save();
+
+    return res.json({ message: 'Password successfully changed.' });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: 'An error occurred while changing password.' });
+  }
+};
+
 module.exports = {
   loginPage,
   login,
   logout,
   signup,
+  settingsPage,
   followUser,
   unfollowUser,
   blockUser,
   unblockUser,
   getCurrentUser,
+  changePassword,
 };

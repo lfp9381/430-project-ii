@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <title>Simple Social Media Site - Settings</title>
+    <link rel="shortcut icon" href="/assets/img/favicon.png" />
+    <link rel="stylesheet" type="text/css" href="/assets/style.css" />
+</head>
+
+<body>
+    <nav>
+        <a href="/home"><img id="logo" src="/assets/img/home-icon.png" alt="home icon" /></a>
+        <div class="navlink"><a href="/logout">Log out</a></div>
+        <div class="navlink"><a href="/settings">Settings</a></div>
+    </nav>
+
+    <div id="settingsRoot"></div>
+
+    <script id="user-data" type="application/json">
+        {{{meJSON}}}
+    </script>
+
+    <script src="/assets/settingsBundle.js"></script>
+</body>
+
+</html>

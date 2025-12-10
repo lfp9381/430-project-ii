@@ -14,6 +14,9 @@ const router = (app) => {
   app.get('/home', mid.requiresLogin, controllers.Post.homePage);
   app.post('/home', mid.requiresLogin, controllers.Post.makePost);
 
+  app.get('/settings', mid.requiresLogin, controllers.Account.settingsPage);
+  app.post('/settings/password', mid.requiresLogin, controllers.Account.changePassword);
+
   app.get('/', mid.requiresSecure, mid.requiresLogout, controllers.Account.loginPage);
 
   app.post('/follow', mid.requiresLogin, controllers.Account.followUser);
